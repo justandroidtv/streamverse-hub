@@ -26,7 +26,12 @@ export type Settings = {
   requestTimeout: number;
   retryCount: number;
   proxyThroughServer: boolean;
+  /* الترجمة */
+  subtitlesEnabled: boolean;
+  subtitleLang: "ar" | "en";
   /* الواجهة */
+  theme: "dark" | "light";
+  fontSize: "sm" | "md" | "lg";
   density: "comfortable" | "compact";
   gridSize: number;
   showRatings: boolean;
@@ -57,6 +62,10 @@ export const DEFAULTS: Settings = {
   requestTimeout: 15000,
   retryCount: 2,
   proxyThroughServer: true,
+  subtitlesEnabled: true,
+  subtitleLang: "ar",
+  theme: "dark",
+  fontSize: "md",
   density: "comfortable",
   gridSize: 6,
   showRatings: true,
