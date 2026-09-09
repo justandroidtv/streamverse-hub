@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Trash2, Download, Upload, RotateCcw, Play } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Trash2, Download, Upload, RotateCcw, Play, RefreshCw, Eraser } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { removeAccount, setActiveAccount, useAccounts } from "@/lib/account";
-import { clearHistory, useHistory, useFavorites } from "@/lib/history";
+import { clearEpisodeProgress, clearHistory, useHistory, useFavorites } from "@/lib/history";
 import {
   DEFAULTS,
   resetSettings,
@@ -13,7 +14,7 @@ import {
   buildMpvCommand,
   type Settings,
 } from "@/lib/settings";
-import { xtreamCall } from "@/lib/xtream.functions";
+import { xtreamCall, xtreamLogin } from "@/lib/xtream.functions";
 import { useActiveAccount } from "@/lib/account";
 
 export const Route = createFileRoute("/settings")({
