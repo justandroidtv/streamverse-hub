@@ -133,11 +133,13 @@ function Home() {
                     <Play className="size-4" /> تشغيل الآن
                   </Link>
                 )}
-                <CardLink card={hero}>
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface-elevated px-5 py-3 font-semibold">
-                    <Info className="size-4" /> التفاصيل
-                  </span>
-                </CardLink>
+                <Link
+                  to={hero.kind === "movie" ? "/movie/$id" : "/series/$id"}
+                  params={{ id: hero.id }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-surface-elevated px-5 py-3 font-semibold"
+                >
+                  <Info className="size-4" /> التفاصيل
+                </Link>
               </div>
             </div>
           </div>
