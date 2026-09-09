@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Trash2, Download, Upload, RotateCcw, Play } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Trash2, Download, Upload, RotateCcw, Play, RefreshCw, Eraser } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { removeAccount, setActiveAccount, useAccounts } from "@/lib/account";
-import { clearHistory, useHistory, useFavorites } from "@/lib/history";
+import { clearEpisodeProgress, clearHistory, useHistory, useFavorites } from "@/lib/history";
 import {
   DEFAULTS,
   resetSettings,
@@ -13,7 +14,7 @@ import {
   buildMpvCommand,
   type Settings,
 } from "@/lib/settings";
-import { xtreamCall } from "@/lib/xtream.functions";
+import { xtreamCall, xtreamLogin } from "@/lib/xtream.functions";
 import { useActiveAccount } from "@/lib/account";
 
 export const Route = createFileRoute("/settings")({
@@ -120,6 +121,38 @@ function SettingsPage() {
 
 function AccountsTab() {
   const { accounts, activeId } = useAccounts();
+  const active = useActiveAccount();
+  const queryClient = useQueryClient();
+  const login = useServerFn(xtreamLogin);
+  const [syncMsg, setSyncMsg] = useState("");
+
+  const status = useQuery({
+    queryKey: ["account-status", active?.id],
+    enabled: Boolean(active),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () =>
+      (await login({
+        data: {
+          creds: {
+            server: active!.server,
+            username: active!.username,
+            password: active!.password,
+          },
+        },
+      })) as { exp_date?: string; max_connections?: string; active_cons?: string; status?: string },
+  });
+
+  const expiry = status.data?.exp_date
+    ? new Date(Number(status.data.exp_date) * 1000).toLocaleDateString("ar")
+    : null;
+
+  const forceSync = async () => {
+    setSyncMsg("جارٍ تحديث البيانات…");
+    await queryClient.invalidateQueries({ queryKey: ["xtream"] });
+    await status.refetch();
+    setSyncMsg("تم تحديث القنوات والأفلام والمسلسلات.");
+  };
+
   return (
     <section className="space-y-3">
       {accounts.length === 0 ? (
@@ -155,12 +188,43 @@ function AccountsTab() {
           </div>
         ))
       )}
-      <Link
-        to="/login"
-        className="inline-block rounded-xl gradient-accent px-5 py-3 font-bold text-primary-foreground"
-      >
-        إضافة اشتراك جديد
-      </Link>
+
+      {active ? (
+        <div className="grid gap-3 rounded-xl bg-surface p-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs text-muted-foreground">حالة الاشتراك</p>
+            <p className="font-semibold">
+              {status.isLoading ? "…" : status.data?.status || (status.isError ? "غير متاح" : "—")}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">تاريخ الانتهاء</p>
+            <p className="font-semibold">{expiry || "غير محدد"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">الاتصالات</p>
+            <p className="font-semibold">
+              {status.data?.active_cons ?? "0"} / {status.data?.max_connections ?? "—"}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          to="/login"
+          className="inline-block rounded-xl gradient-accent px-5 py-3 font-bold text-primary-foreground"
+        >
+          إضافة اشتراك جديد
+        </Link>
+        <button
+          onClick={() => void forceSync()}
+          className="inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-semibold"
+        >
+          <RefreshCw className="size-4" /> مزامنة البيانات
+        </button>
+        {syncMsg ? <span className="text-sm text-primary">{syncMsg}</span> : null}
+      </div>
     </section>
   );
 }

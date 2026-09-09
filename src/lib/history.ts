@@ -91,3 +91,47 @@ export function toggleFavorite(item: FavItem) {
 export function isFavorite(list: FavItem[], key: string) {
   return list.some((x) => x.key === key);
 }
+
+/* ---------- تقدّم الحلقات (لكل حلقة على حدة) ---------- */
+
+export type EpisodeProgress = Record<string, { p: number; d: number; t: number }>;
+
+const E_KEY = "iptv.episodes.v1";
+const EMPTY_E: EpisodeProgress = {};
+
+export function useEpisodeProgress() {
+  return useSyncExternalStore(
+    subscribe,
+    () => read<EpisodeProgress>(E_KEY, EMPTY_E),
+    () => EMPTY_E,
+  );
+}
+
+export function recordEpisodeProgress(episodeId: string, current: number, duration: number) {
+  if (!duration) return;
+  const map = read<EpisodeProgress>(E_KEY, EMPTY_E);
+  const prev = map[episodeId];
+  if (prev && Math.abs(prev.p - current) < 5 && prev.d === duration) return;
+  write(E_KEY, { ...map, [episodeId]: { p: current, d: duration, t: Date.now() } });
+}
+
+export function markEpisodeWatched(episodeId: string, watched = true) {
+  const map = read<EpisodeProgress>(E_KEY, EMPTY_E);
+  const prev = map[episodeId];
+  const d = prev?.d || 1;
+  write(E_KEY, { ...map, [episodeId]: { p: watched ? d : 0, d, t: Date.now() } });
+}
+
+export type EpisodeState = "watched" | "partial" | "none";
+
+export function episodeState(map: EpisodeProgress, episodeId: string): EpisodeState {
+  const e = map[episodeId];
+  if (!e || !e.d) return "none";
+  const ratio = e.p / e.d;
+  if (ratio >= 0.9) return "watched";
+  return ratio > 0.02 ? "partial" : "none";
+}
+
+export function clearEpisodeProgress() {
+  write(E_KEY, {} as EpisodeProgress);
+}

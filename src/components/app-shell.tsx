@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Search, Settings, Tv, Film, Clapperboard, Home, Heart } from "lucide-react";
 import { useActiveAccount } from "@/lib/account";
+import { useSettings } from "@/lib/settings";
 
 const NAV = [
   { to: "/", label: "الرئيسية", icon: Home },
@@ -15,6 +16,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const account = useActiveAccount();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const { theme, fontSize } = useSettings();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("light", theme === "light");
+    root.dataset["fs"] = fontSize;
+  }, [theme, fontSize]);
+
 
   return (
     <div className="min-h-screen bg-background">

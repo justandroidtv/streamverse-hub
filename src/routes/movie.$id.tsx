@@ -7,9 +7,11 @@ import { ErrorState } from "@/components/media";
 import { VideoPlayer } from "@/components/player";
 import { movieUrl, useXtream } from "@/lib/xtream-client";
 import { useActiveAccount } from "@/lib/account";
-import { isFavorite, recordWatch, toggleFavorite, useFavorites } from "@/lib/history";
+import { isFavorite, recordWatch, toggleFavorite, useFavorites, useHistory } from "@/lib/history";
 
 export const Route = createFileRoute("/movie/$id")({
+  validateSearch: (search: Record<string, unknown>): { play?: boolean } =>
+    search["play"] ? { play: true } : {},
   head: () => ({
     meta: [
       { title: "تفاصيل الفيلم — IPTV سمارت" },
@@ -34,9 +36,11 @@ type VodInfo = {
 
 function MovieDetail() {
   const { id } = Route.useParams();
+  const { play } = Route.useSearch();
   const account = useActiveAccount();
   const favorites = useFavorites();
-  const [playing, setPlaying] = useState(false);
+  const history = useHistory();
+  const [playing, setPlaying] = useState(Boolean(play));
 
   const q = useXtream<VodInfo>({ action: "get_vod_info", vod_id: id });
   const info = q.data?.info;
@@ -44,6 +48,7 @@ function MovieDetail() {
   const title = data?.name || "فيلم";
   const poster = info?.movie_image || "";
   const key = `movie:${id}`;
+  const resumeAt = history.find((h) => h.key === key)?.progress;
 
   if (q.isError)
     return <ErrorState message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
@@ -53,6 +58,8 @@ function MovieDetail() {
       {playing && account ? (
         <VideoPlayer
           src={movieUrl(account, id, data?.container_extension || "mp4")}
+          title={title}
+          startAt={resumeAt}
           onProgress={(c, d) =>
             recordWatch({
               key,
@@ -89,7 +96,7 @@ function MovieDetail() {
               onClick={() => setPlaying(true)}
               className="inline-flex items-center gap-2 rounded-xl gradient-accent px-6 py-3 font-bold text-primary-foreground"
             >
-              <Play className="size-4" /> تشغيل
+              <Play className="size-4" /> {resumeAt && resumeAt > 30 ? "متابعة المشاهدة" : "تشغيل"}
             </button>
             <button
               onClick={() => toggleFavorite({ key, kind: "movie", id, title, poster })}
