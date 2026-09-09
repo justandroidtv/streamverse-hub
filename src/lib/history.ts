@@ -1,0 +1,93 @@
+import { useSyncExternalStore } from "react";
+
+export type WatchItem = {
+  key: string;
+  kind: "live" | "movie" | "series";
+  id: string;
+  title: string;
+  poster?: string;
+  ext?: string;
+  progress?: number;
+  duration?: number;
+  updatedAt: number;
+};
+
+export type FavItem = {
+  key: string;
+  kind: "live" | "movie" | "series";
+  id: string;
+  title: string;
+  poster?: string;
+};
+
+const H_KEY = "iptv.history.v1";
+const F_KEY = "iptv.favorites.v1";
+
+const listeners = new Set<() => void>();
+const cache: Record<string, unknown> = {};
+
+function read<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  if (key in cache) return cache[key] as T;
+  try {
+    const raw = window.localStorage.getItem(key);
+    cache[key] = raw ? JSON.parse(raw) : fallback;
+  } catch {
+    cache[key] = fallback;
+  }
+  return cache[key] as T;
+}
+
+function write<T>(key: string, value: T) {
+  cache[key] = value;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
+  listeners.forEach((l) => l());
+}
+
+function subscribe(l: () => void) {
+  listeners.add(l);
+  return () => listeners.delete(l);
+}
+
+const EMPTY_H: WatchItem[] = [];
+const EMPTY_F: FavItem[] = [];
+
+export function useHistory() {
+  return useSyncExternalStore(
+    subscribe,
+    () => read<WatchItem[]>(H_KEY, EMPTY_H),
+    () => EMPTY_H,
+  );
+}
+
+export function useFavorites() {
+  return useSyncExternalStore(
+    subscribe,
+    () => read<FavItem[]>(F_KEY, EMPTY_F),
+    () => EMPTY_F,
+  );
+}
+
+export function recordWatch(item: Omit<WatchItem, "updatedAt">) {
+  const list = read<WatchItem[]>(H_KEY, EMPTY_H).filter((x) => x.key !== item.key);
+  write(H_KEY, [{ ...item, updatedAt: Date.now() }, ...list].slice(0, 40));
+}
+
+export function clearHistory() {
+  write(H_KEY, [] as WatchItem[]);
+}
+
+export function toggleFavorite(item: FavItem) {
+  const list = read<FavItem[]>(F_KEY, EMPTY_F);
+  const exists = list.some((x) => x.key === item.key);
+  write(F_KEY, exists ? list.filter((x) => x.key !== item.key) : [item, ...list]);
+  return !exists;
+}
+
+export function isFavorite(list: FavItem[], key: string) {
+  return list.some((x) => x.key === key);
+}
