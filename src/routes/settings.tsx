@@ -326,6 +326,21 @@ function PlaybackTab() {
         value={s.hlsWorker}
         onChange={(v) => updateSettings({ hlsWorker: v })}
       />
+      <Toggle
+        label="تشغيل الترجمة افتراضياً"
+        value={s.subtitlesEnabled}
+        onChange={(v) => updateSettings({ subtitlesEnabled: v })}
+      />
+      <Field label="لغة الترجمة المفضلة">
+        <select
+          className={inputCls}
+          value={s.subtitleLang}
+          onChange={(e) => updateSettings({ subtitleLang: e.target.value as Settings["subtitleLang"] })}
+        >
+          <option value="ar">العربية</option>
+          <option value="en">الإنجليزية</option>
+        </select>
+      </Field>
     </section>
   );
 }
@@ -427,6 +442,27 @@ function InterfaceTab() {
   const s = useSettings();
   return (
     <section className="grid gap-3 md:grid-cols-2">
+      <Field label="المظهر" hint="الوضع المظلم أو النهاري.">
+        <select
+          className={inputCls}
+          value={s.theme}
+          onChange={(e) => updateSettings({ theme: e.target.value as Settings["theme"] })}
+        >
+          <option value="dark">مظلم</option>
+          <option value="light">نهاري</option>
+        </select>
+      </Field>
+      <Field label="حجم الخط">
+        <select
+          className={inputCls}
+          value={s.fontSize}
+          onChange={(e) => updateSettings({ fontSize: e.target.value as Settings["fontSize"] })}
+        >
+          <option value="sm">صغير</option>
+          <option value="md">متوسط</option>
+          <option value="lg">كبير</option>
+        </select>
+      </Field>
       <Field label="كثافة العرض">
         <select
           className={inputCls}
@@ -470,6 +506,18 @@ function InterfaceTab() {
       />
     </section>
   );
+}
+
+async function clearImageCache(setMsg: (v: string) => void) {
+  try {
+    if (typeof caches !== "undefined") {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    setMsg("تم مسح ذاكرة الصور المؤقتة.");
+  } catch {
+    setMsg("تعذّر مسح ذاكرة الصور في هذا المتصفح.");
+  }
 }
 
 function DataTab() {
@@ -545,6 +593,21 @@ function DataTab() {
           className="rounded-xl bg-surface px-5 py-3 text-sm font-semibold text-destructive"
         >
           مسح سجل المشاهدة
+        </button>
+        <button
+          onClick={() => {
+            clearEpisodeProgress();
+            setMsg("تم مسح حالة الحلقات المُشاهدة.");
+          }}
+          className="rounded-xl bg-surface px-5 py-3 text-sm font-semibold text-destructive"
+        >
+          مسح حالة الحلقات
+        </button>
+        <button
+          onClick={() => void clearImageCache(setMsg)}
+          className="inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-semibold"
+        >
+          <Eraser className="size-4" /> مسح ذاكرة الصور
         </button>
         <button
           onClick={() => resetSettings()}
