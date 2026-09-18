@@ -508,6 +508,18 @@ function InterfaceTab() {
   );
 }
 
+async function clearImageCache(setMsg: (v: string) => void) {
+  try {
+    if (typeof caches !== "undefined") {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    setMsg("تم مسح ذاكرة الصور المؤقتة.");
+  } catch {
+    setMsg("تعذّر مسح ذاكرة الصور في هذا المتصفح.");
+  }
+}
+
 function DataTab() {
   const history = useHistory();
   const favorites = useFavorites();
