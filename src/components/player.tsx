@@ -43,6 +43,7 @@ export function VideoPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [subs, setSubs] = useState(settings.subtitlesEnabled);
   const [osd, setOsd] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
   const external = settings.engine !== "internal" && settings.engine !== "ask";
 
