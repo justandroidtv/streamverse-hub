@@ -113,6 +113,7 @@ function SeriesDetail() {
               id,
               title: `${title} — ح${current.episode_num}`,
               poster,
+              episodeId: current.id,
               progress: c,
               duration: d,
             });
