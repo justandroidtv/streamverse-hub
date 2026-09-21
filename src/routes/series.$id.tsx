@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Play, Check, Hourglass, Star } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { RequireAccount } from "@/components/require-account";
@@ -61,6 +61,7 @@ type SeriesInfo = {
 
 function SeriesDetail() {
   const { id } = Route.useParams();
+  const { ep } = Route.useSearch();
   const account = useActiveAccount();
   const favorites = useFavorites();
   const progress = useEpisodeProgress();
