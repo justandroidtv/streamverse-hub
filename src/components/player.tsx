@@ -288,7 +288,10 @@ export function VideoPlayer({
           className="aspect-video w-full bg-black"
           onClick={toggle}
           onDoubleClick={toggleFullscreen}
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+            setBlocked(false);
+          }}
           onPause={() => setPlaying(false)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
           onError={() => setError("تعذّر تشغيل هذا المصدر.")}
