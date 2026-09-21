@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { xtreamCall, type Creds } from "./xtream.functions";
 import { useActiveAccount } from "./account";
+import { getSettings, useSettings } from "./settings";
 
 export type Category = { category_id: string; category_name: string };
 
