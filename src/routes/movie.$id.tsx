@@ -50,7 +50,9 @@ function MovieDetail() {
   const title = data?.name || "فيلم";
   const poster = info?.movie_image || "";
   const key = `movie:${id}`;
-  const resumeAt = history.find((h) => h.key === key)?.progress;
+  const resumeAt = settings.resumePlayback
+    ? history.find((h) => h.key === key)?.progress
+    : undefined;
 
   if (q.isError)
     return <ErrorState message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
