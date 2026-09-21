@@ -59,6 +59,7 @@ export function episodeUrl(creds: Creds, id: number | string, ext = "mp4") {
 /** Query any Xtream action through the server proxy for the active account. */
 export function useXtream<T>(params: Record<string, string>, enabled = true) {
   const account = useActiveAccount();
+  const settings = useSettings();
   const creds = account
     ? { server: account.server, username: account.username, password: account.password }
     : null;
@@ -68,7 +69,14 @@ export function useXtream<T>(params: Record<string, string>, enabled = true) {
     enabled: Boolean(creds) && enabled,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const res = await xtreamCall({ data: { creds: creds!, params } });
+      const res = await xtreamCall({
+        data: {
+          creds: creds!,
+          params,
+          timeout: settings.requestTimeout,
+          retries: settings.retryCount,
+        },
+      });
       return res as T;
     },
   });
