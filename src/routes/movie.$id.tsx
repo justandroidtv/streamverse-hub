@@ -39,6 +39,7 @@ function MovieDetail() {
   const { id } = Route.useParams();
   const { play } = Route.useSearch();
   const account = useActiveAccount();
+  const settings = useSettings();
   const favorites = useFavorites();
   const history = useHistory();
   const [playing, setPlaying] = useState(Boolean(play));
