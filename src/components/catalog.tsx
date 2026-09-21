@@ -140,7 +140,7 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
         <EmptyState title="لا توجد نتائج" hint="جرّب تصنيفاً آخر أو كلمة بحث مختلفة." />
       ) : view === "grid" ? (
         <div
-          className="grid gap-4"
+          className={`grid ${compact ? "gap-2" : "gap-4"}`}
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
         >
           {list.map((item) => (
@@ -161,15 +161,19 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className={compact ? "space-y-1" : "space-y-2"}>
           {list.map((item) => (
             <ItemLink key={itemId(kind, item)} kind={kind} id={itemId(kind, item)}>
-              <div className="flex items-center gap-4 rounded-xl bg-surface p-3 transition hover:bg-surface-elevated">
+              <div
+                className={`flex items-center rounded-xl bg-surface transition hover:bg-surface-elevated ${
+                  compact ? "gap-3 p-2" : "gap-4 p-3"
+                }`}
+              >
                 <img
                   src={posterOf(item)}
                   alt={item.name}
                   loading="lazy"
-                  className="h-24 w-16 rounded-lg object-cover"
+                  className={`rounded-lg object-cover ${compact ? "h-16 w-11" : "h-24 w-16"}`}
                 />
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{item.name}</p>
