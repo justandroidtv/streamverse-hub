@@ -44,8 +44,20 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
     ...(filter === "genre" && category !== "all" ? { category_id: category } : {}),
   });
 
+  const adultIds = useMemo(() => {
+    const re = /(adult|xxx|porn|للكبار|\+18|18\+)/i;
+    return new Set(
+      asArray<Category>(cats.data)
+        .filter((c) => re.test(c.category_name || ""))
+        .map((c) => String(c.category_id)),
+    );
+  }, [cats.data]);
+
   const list = useMemo(() => {
     let data = asArray<Movie & Series>(items.data);
+    if (!settings.showAdultCategories && adultIds.size) {
+      data = data.filter((i) => !adultIds.has(String(i.category_id ?? "")));
+    }
     if (term.trim()) {
       const t = term.trim().toLowerCase();
       data = data.filter((i) => i.name?.toLowerCase().includes(t));
