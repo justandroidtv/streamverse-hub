@@ -7,6 +7,7 @@ export type WatchItem = {
   title: string;
   poster?: string;
   ext?: string;
+  episodeId?: string;
   progress?: number;
   duration?: number;
   updatedAt: number;

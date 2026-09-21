@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/player";
 import { movieUrl, useXtream } from "@/lib/xtream-client";
 import { useActiveAccount } from "@/lib/account";
 import { isFavorite, recordWatch, toggleFavorite, useFavorites, useHistory } from "@/lib/history";
+import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/movie/$id")({
   validateSearch: (search: Record<string, unknown>): { play?: boolean } =>
