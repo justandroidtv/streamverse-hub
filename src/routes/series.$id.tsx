@@ -19,6 +19,8 @@ import {
 } from "@/lib/history";
 
 export const Route = createFileRoute("/series/$id")({
+  validateSearch: (search: Record<string, unknown>): { ep?: string } =>
+    search["ep"] ? { ep: String(search["ep"]) } : {},
   head: () => ({
     meta: [
       { title: "تفاصيل المسلسل — IPTV سمارت" },
