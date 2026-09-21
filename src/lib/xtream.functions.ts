@@ -62,7 +62,7 @@ export type Json = string | number | boolean | null | Json[] | { [k: string]: Js
 export const xtreamCall = createServerFn({ method: "POST" })
   .inputValidator((d: Input) => d)
   .handler(async ({ data }) => {
-    return (await call(data.creds, data.params)) as Json;
+    return (await call(data.creds, data.params, data.timeout, data.retries)) as Json;
   });
 
 
