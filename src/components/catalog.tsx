@@ -69,9 +69,10 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
         (a, b) => Number(b.added || b.last_modified || 0) - Number(a.added || a.last_modified || 0),
       );
     return sorted.slice(0, settings.pageSize * 5);
-  }, [items.data, term, filter, settings.pageSize]);
+  }, [items.data, term, filter, settings.pageSize, settings.showAdultCategories, adultIds]);
 
-  const cols = Math.min(10, Math.max(2, settings.gridSize));
+  const compact = settings.density === "compact";
+  const cols = Math.min(12, Math.max(2, settings.gridSize + (compact ? 1 : 0)));
 
   return (
     <div className="space-y-6">
