@@ -106,7 +106,8 @@ export function VideoPlayer({
       };
       video.addEventListener("loadedmetadata", seek);
     }
-    if (settings.autoplay) video.play().catch(() => {});
+    setBlocked(false);
+    if (settings.autoplay) video.play().catch(() => setBlocked(true));
     return () => {
       cancelled = true;
       destroy();
@@ -119,7 +120,10 @@ export function VideoPlayer({
     const v = ref.current;
     if (!v) return;
     if (v.paused) {
-      v.play().catch(() => {});
+      v.play().then(
+        () => setBlocked(false),
+        () => setBlocked(true),
+      );
       flash("تشغيل");
     } else {
       v.pause();
