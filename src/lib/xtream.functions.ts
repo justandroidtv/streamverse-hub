@@ -8,7 +8,7 @@ function normalizeBase(server: string) {
   return s;
 }
 
-async function call(creds: Creds, params: Record<string, string>) {
+async function once(creds: Creds, params: Record<string, string>, timeout: number) {
   const base = normalizeBase(creds.server);
   const url = new URL(`${base}/player_api.php`);
   url.searchParams.set("username", creds.username);
@@ -17,6 +17,7 @@ async function call(creds: Creds, params: Record<string, string>) {
 
   const res = await fetch(url.toString(), {
     headers: { "User-Agent": "VLC/3.0.20 LibVLC/3.0.20", Accept: "application/json" },
+    signal: AbortSignal.timeout(timeout),
   });
   if (!res.ok) throw new Error(`تعذر الاتصال بالخادم (${res.status})`);
   const text = await res.text();
@@ -27,7 +28,33 @@ async function call(creds: Creds, params: Record<string, string>) {
   }
 }
 
-type Input = { creds: Creds; params: Record<string, string> };
+async function call(
+  creds: Creds,
+  params: Record<string, string>,
+  timeout = 15000,
+  retries = 0,
+) {
+  const t = Math.min(120000, Math.max(2000, timeout));
+  let lastError: unknown;
+  for (let i = 0; i <= Math.min(5, Math.max(0, retries)); i++) {
+    try {
+      return await once(creds, params, t);
+    } catch (e) {
+      lastError = e;
+      if (e instanceof Error && e.name === "TimeoutError") {
+        lastError = new Error("انتهت مهلة الاتصال بالخادم.");
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("تعذر الاتصال بالخادم.");
+}
+
+type Input = {
+  creds: Creds;
+  params: Record<string, string>;
+  timeout?: number | undefined;
+  retries?: number | undefined;
+};
 
 export type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
@@ -35,7 +62,7 @@ export type Json = string | number | boolean | null | Json[] | { [k: string]: Js
 export const xtreamCall = createServerFn({ method: "POST" })
   .inputValidator((d: Input) => d)
   .handler(async ({ data }) => {
-    return (await call(data.creds, data.params)) as Json;
+    return (await call(data.creds, data.params, data.timeout, data.retries)) as Json;
   });
 
 

@@ -157,20 +157,45 @@ function Home() {
             }
           />
           <Row>
-            {history.map((h) => (
-              <Link
-                key={h.key}
-                to={h.kind === "series" ? "/series/$id" : h.kind === "movie" ? "/movie/$id" : "/live"}
-                params={{ id: h.id }}
-                className="focus-card w-32 shrink-0 rounded-xl md:w-40"
-              >
+            {history.map((h) => {
+              const card = (
                 <PosterCard
                   title={h.title}
                   poster={h.poster}
                   progress={h.progress && h.duration ? h.progress / h.duration : undefined}
                 />
-              </Link>
-            ))}
+              );
+              const cls = "focus-card w-32 shrink-0 rounded-xl md:w-40";
+              if (h.kind === "series")
+                return (
+                  <Link
+                    key={h.key}
+                    to="/series/$id"
+                    params={{ id: h.id }}
+                    search={h.episodeId ? { ep: h.episodeId } : {}}
+                    className={cls}
+                  >
+                    {card}
+                  </Link>
+                );
+              if (h.kind === "movie")
+                return (
+                  <Link
+                    key={h.key}
+                    to="/movie/$id"
+                    params={{ id: h.id }}
+                    search={{ play: true }}
+                    className={cls}
+                  >
+                    {card}
+                  </Link>
+                );
+              return (
+                <Link key={h.key} to="/live" className={cls}>
+                  {card}
+                </Link>
+              );
+            })}
           </Row>
         </section>
       ) : null}

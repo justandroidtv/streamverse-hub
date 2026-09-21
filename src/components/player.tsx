@@ -43,6 +43,7 @@ export function VideoPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [subs, setSubs] = useState(settings.subtitlesEnabled);
   const [osd, setOsd] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const [showKeys, setShowKeys] = useState(false);
   const external = settings.engine !== "internal" && settings.engine !== "ask";
 
@@ -105,7 +106,8 @@ export function VideoPlayer({
       };
       video.addEventListener("loadedmetadata", seek);
     }
-    if (settings.autoplay) video.play().catch(() => {});
+    setBlocked(false);
+    if (settings.autoplay) video.play().catch(() => setBlocked(true));
     return () => {
       cancelled = true;
       destroy();
@@ -118,7 +120,10 @@ export function VideoPlayer({
     const v = ref.current;
     if (!v) return;
     if (v.paused) {
-      v.play().catch(() => {});
+      v.play().then(
+        () => setBlocked(false),
+        () => setBlocked(true),
+      );
       flash("تشغيل");
     } else {
       v.pause();
@@ -283,7 +288,10 @@ export function VideoPlayer({
           className="aspect-video w-full bg-black"
           onClick={toggle}
           onDoubleClick={toggleFullscreen}
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+            setBlocked(false);
+          }}
           onPause={() => setPlaying(false)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
           onError={() => setError("تعذّر تشغيل هذا المصدر.")}
@@ -433,6 +441,40 @@ export function VideoPlayer({
               >
                 إعادة المحاولة
               </button>
+            </div>
+          </div>
+        ) : null}
+
+        {blocked && !error ? (
+          <div className="absolute inset-0 grid place-items-center bg-background/85 p-6 text-center">
+            <div>
+              <p className="font-semibold">منع المتصفح التشغيل التلقائي</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                اضغط الزر لبدء التشغيل، أو فعّل «بدء بدون صوت» من الإعدادات.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={toggle}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  <Play className="size-4" /> تشغيل
+                </button>
+                <button
+                  onClick={() => {
+                    const v = ref.current;
+                    if (!v) return;
+                    v.muted = true;
+                    setMuted(true);
+                    v.play().then(
+                      () => setBlocked(false),
+                      () => setBlocked(true),
+                    );
+                  }}
+                  className="rounded-lg bg-surface px-4 py-2 text-sm font-semibold"
+                >
+                  تشغيل بدون صوت
+                </button>
+              </div>
             </div>
           </div>
         ) : null}

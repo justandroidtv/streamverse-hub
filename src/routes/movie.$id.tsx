@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/player";
 import { movieUrl, useXtream } from "@/lib/xtream-client";
 import { useActiveAccount } from "@/lib/account";
 import { isFavorite, recordWatch, toggleFavorite, useFavorites, useHistory } from "@/lib/history";
+import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/movie/$id")({
   validateSearch: (search: Record<string, unknown>): { play?: boolean } =>
@@ -38,6 +39,7 @@ function MovieDetail() {
   const { id } = Route.useParams();
   const { play } = Route.useSearch();
   const account = useActiveAccount();
+  const settings = useSettings();
   const favorites = useFavorites();
   const history = useHistory();
   const [playing, setPlaying] = useState(Boolean(play));
@@ -48,7 +50,9 @@ function MovieDetail() {
   const title = data?.name || "فيلم";
   const poster = info?.movie_image || "";
   const key = `movie:${id}`;
-  const resumeAt = history.find((h) => h.key === key)?.progress;
+  const resumeAt = settings.resumePlayback
+    ? history.find((h) => h.key === key)?.progress
+    : undefined;
 
   if (q.isError)
     return <ErrorState message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;

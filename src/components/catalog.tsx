@@ -44,8 +44,20 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
     ...(filter === "genre" && category !== "all" ? { category_id: category } : {}),
   });
 
+  const adultIds = useMemo(() => {
+    const re = /(adult|xxx|porn|للكبار|\+18|18\+)/i;
+    return new Set(
+      asArray<Category>(cats.data)
+        .filter((c) => re.test(c.category_name || ""))
+        .map((c) => String(c.category_id)),
+    );
+  }, [cats.data]);
+
   const list = useMemo(() => {
     let data = asArray<Movie & Series>(items.data);
+    if (!settings.showAdultCategories && adultIds.size) {
+      data = data.filter((i) => !adultIds.has(String(i.category_id ?? "")));
+    }
     if (term.trim()) {
       const t = term.trim().toLowerCase();
       data = data.filter((i) => i.name?.toLowerCase().includes(t));
@@ -57,9 +69,10 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
         (a, b) => Number(b.added || b.last_modified || 0) - Number(a.added || a.last_modified || 0),
       );
     return sorted.slice(0, settings.pageSize * 5);
-  }, [items.data, term, filter, settings.pageSize]);
+  }, [items.data, term, filter, settings.pageSize, settings.showAdultCategories, adultIds]);
 
-  const cols = Math.min(10, Math.max(2, settings.gridSize));
+  const compact = settings.density === "compact";
+  const cols = Math.min(12, Math.max(2, settings.gridSize + (compact ? 1 : 0)));
 
   return (
     <div className="space-y-6">
@@ -127,7 +140,7 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
         <EmptyState title="لا توجد نتائج" hint="جرّب تصنيفاً آخر أو كلمة بحث مختلفة." />
       ) : view === "grid" ? (
         <div
-          className="grid gap-4"
+          className={`grid ${compact ? "gap-2" : "gap-4"}`}
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
         >
           {list.map((item) => (
@@ -148,15 +161,19 @@ export function Catalog({ kind, initialFilter = "all" }: { kind: Kind; initialFi
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className={compact ? "space-y-1" : "space-y-2"}>
           {list.map((item) => (
             <ItemLink key={itemId(kind, item)} kind={kind} id={itemId(kind, item)}>
-              <div className="flex items-center gap-4 rounded-xl bg-surface p-3 transition hover:bg-surface-elevated">
+              <div
+                className={`flex items-center rounded-xl bg-surface transition hover:bg-surface-elevated ${
+                  compact ? "gap-3 p-2" : "gap-4 p-3"
+                }`}
+              >
                 <img
                   src={posterOf(item)}
                   alt={item.name}
                   loading="lazy"
-                  className="h-24 w-16 rounded-lg object-cover"
+                  className={`rounded-lg object-cover ${compact ? "h-16 w-11" : "h-24 w-16"}`}
                 />
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{item.name}</p>

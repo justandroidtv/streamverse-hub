@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Play, Check, Hourglass, Star } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { RequireAccount } from "@/components/require-account";
@@ -19,6 +19,8 @@ import {
 } from "@/lib/history";
 
 export const Route = createFileRoute("/series/$id")({
+  validateSearch: (search: Record<string, unknown>): { ep?: string } =>
+    search["ep"] ? { ep: String(search["ep"]) } : {},
   head: () => ({
     meta: [
       { title: "تفاصيل المسلسل — IPTV سمارت" },
@@ -59,6 +61,7 @@ type SeriesInfo = {
 
 function SeriesDetail() {
   const { id } = Route.useParams();
+  const { ep } = Route.useSearch();
   const account = useActiveAccount();
   const favorites = useFavorites();
   const progress = useEpisodeProgress();
@@ -76,6 +79,21 @@ function SeriesDetail() {
   const poster = info?.cover || "";
   const backdrop = info?.backdrop_path?.[0] || poster;
   const key = `series:${id}`;
+
+  // استئناف الحلقة القادمة من "استمر في المشاهدة"
+  const applied = useRef(false);
+  useEffect(() => {
+    if (applied.current || !ep) return;
+    for (const [s, eps] of Object.entries(episodes)) {
+      const match = eps.find((e) => String(e.id) === ep);
+      if (match) {
+        applied.current = true;
+        setSeason(s);
+        setCurrent(match);
+        return;
+      }
+    }
+  }, [ep, episodes]);
 
   if (q.isError)
     return <ErrorState message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
@@ -95,6 +113,7 @@ function SeriesDetail() {
               id,
               title: `${title} — ح${current.episode_num}`,
               poster,
+              episodeId: current.id,
               progress: c,
               duration: d,
             });

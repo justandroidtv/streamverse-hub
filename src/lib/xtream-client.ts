@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { xtreamCall, type Creds } from "./xtream.functions";
 import { useActiveAccount } from "./account";
+import { getSettings, useSettings } from "./settings";
 
 export type Category = { category_id: string; category_name: string };
 
@@ -40,18 +41,25 @@ function baseUrl(creds: Creds) {
 }
 
 export function liveUrl(creds: Creds, id: number | string) {
-  return `${baseUrl(creds)}/live/${creds.username}/${creds.password}/${id}.m3u8`;
+  const fmt = getSettings().preferredStreamFormat;
+  return `${baseUrl(creds)}/live/${creds.username}/${creds.password}/${id}.${fmt}`;
+}
+function vodExt(ext?: string) {
+  const pref = getSettings().preferredVodExt;
+  if (pref !== "auto") return pref;
+  return ext || "mp4";
 }
 export function movieUrl(creds: Creds, id: number | string, ext = "mp4") {
-  return `${baseUrl(creds)}/movie/${creds.username}/${creds.password}/${id}.${ext}`;
+  return `${baseUrl(creds)}/movie/${creds.username}/${creds.password}/${id}.${vodExt(ext)}`;
 }
 export function episodeUrl(creds: Creds, id: number | string, ext = "mp4") {
-  return `${baseUrl(creds)}/series/${creds.username}/${creds.password}/${id}.${ext}`;
+  return `${baseUrl(creds)}/series/${creds.username}/${creds.password}/${id}.${vodExt(ext)}`;
 }
 
 /** Query any Xtream action through the server proxy for the active account. */
 export function useXtream<T>(params: Record<string, string>, enabled = true) {
   const account = useActiveAccount();
+  const settings = useSettings();
   const creds = account
     ? { server: account.server, username: account.username, password: account.password }
     : null;
@@ -61,7 +69,14 @@ export function useXtream<T>(params: Record<string, string>, enabled = true) {
     enabled: Boolean(creds) && enabled,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const res = await xtreamCall({ data: { creds: creds!, params } });
+      const res = await xtreamCall({
+        data: {
+          creds: creds!,
+          params,
+          timeout: settings.requestTimeout,
+          retries: settings.retryCount,
+        },
+      });
       return res as T;
     },
   });
