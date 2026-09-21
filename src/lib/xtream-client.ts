@@ -40,13 +40,19 @@ function baseUrl(creds: Creds) {
 }
 
 export function liveUrl(creds: Creds, id: number | string) {
-  return `${baseUrl(creds)}/live/${creds.username}/${creds.password}/${id}.m3u8`;
+  const fmt = getSettings().preferredStreamFormat;
+  return `${baseUrl(creds)}/live/${creds.username}/${creds.password}/${id}.${fmt}`;
+}
+function vodExt(ext?: string) {
+  const pref = getSettings().preferredVodExt;
+  if (pref !== "auto") return pref;
+  return ext || "mp4";
 }
 export function movieUrl(creds: Creds, id: number | string, ext = "mp4") {
-  return `${baseUrl(creds)}/movie/${creds.username}/${creds.password}/${id}.${ext}`;
+  return `${baseUrl(creds)}/movie/${creds.username}/${creds.password}/${id}.${vodExt(ext)}`;
 }
 export function episodeUrl(creds: Creds, id: number | string, ext = "mp4") {
-  return `${baseUrl(creds)}/series/${creds.username}/${creds.password}/${id}.${ext}`;
+  return `${baseUrl(creds)}/series/${creds.username}/${creds.password}/${id}.${vodExt(ext)}`;
 }
 
 /** Query any Xtream action through the server proxy for the active account. */
