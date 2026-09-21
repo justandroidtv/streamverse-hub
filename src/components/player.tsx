@@ -444,6 +444,40 @@ export function VideoPlayer({
             </div>
           </div>
         ) : null}
+
+        {blocked && !error ? (
+          <div className="absolute inset-0 grid place-items-center bg-background/85 p-6 text-center">
+            <div>
+              <p className="font-semibold">منع المتصفح التشغيل التلقائي</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                اضغط الزر لبدء التشغيل، أو فعّل «بدء بدون صوت» من الإعدادات.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={toggle}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  <Play className="size-4" /> تشغيل
+                </button>
+                <button
+                  onClick={() => {
+                    const v = ref.current;
+                    if (!v) return;
+                    v.muted = true;
+                    setMuted(true);
+                    v.play().then(
+                      () => setBlocked(false),
+                      () => setBlocked(true),
+                    );
+                  }}
+                  className="rounded-lg bg-surface px-4 py-2 text-sm font-semibold"
+                >
+                  تشغيل بدون صوت
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
       <ExternalPlayerBar src={src} title={title} />
     </div>
